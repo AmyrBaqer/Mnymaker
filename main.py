@@ -1,3 +1,4 @@
+import requests
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,15 +29,23 @@ def get_crypto():
         "page": 1,
         "sparkline": False
     }
-    response = requests.get(COINGECKO_API, params=params)
-    data = response.json()
-    result = [
-        {
-            "id": coin["id"],
-            "symbol": coin["symbol"].upper(),
-            "name": coin["name"],
-            "price": coin["current_price"],
-            "change": coin["price_change_percentage_24h"]
-        } for coin in data
-    ]
-    return result
+    try:
+        response = requests.get(COINGECKO_API, params=params)
+        # بررسی وضعیت پاسخ
+        response.raise_for_status()  # اگر خطایی وجود داشته باشد، استثنا پرتاب می‌کند
+
+        data = response.json()
+        result = [
+            {
+                "id": coin["id"],
+                "symbol": coin["symbol"].upper(),
+                "name": coin["name"],
+                "price": coin["current_price"],
+                "change": coin["price_change_percentage_24h"]
+            } for coin in data
+        ]
+        return result
+
+    except requests.exceptions.RequestException as e:
+        # در صورت بروز خطا در دریافت داده‌ها
+        return {"error": f"Unable to fetch data from CoinGecko: {e}"}
