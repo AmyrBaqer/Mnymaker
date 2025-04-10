@@ -1,9 +1,16 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import requests
+from fastapi.responses import HTMLResponse
+from referral import router as referral_router
 
 app = FastAPI()
 
+# اتصال روت‌های رفرال
+app.include_router(referral_router, prefix="/referral")
+
+# صفحه اصلی برای تست که فقط پیام خوشامدگویی می‌دهد
+@app.get("/")
+async def root():
+    return {"message": "به مینی‌اپ ارز دیجیتال خوش آمدید!"}
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # اجازه دسترسی از هر جایی (مهم برای فرانت)
