@@ -1,9 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import requests
-from referral import app as referral_app
-
-app.mount("/referral", referral_app)
 
 app = FastAPI()
 
