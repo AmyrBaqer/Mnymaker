@@ -1,50 +1,34 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from typing import Optional
-from pydantic import BaseModel
+from fastapi import APIRouter
 import uuid
 
-app = FastAPI()
+router = APIRouter()
 
-# دیتابیس ساده برای مثال
-users_db = {}
+# دیتابیس موقتی برای ذخیره‌سازی اطلاعات کاربران
+users = {}
 
-class User(BaseModel):
-    telegram_id: str
-    name: Optional[str] = ""
-    ref_code: Optional[str] = None
+@router.get("/join")
+async def join(user_id: str = "", ref: str = ""):
+    if not user_id:
+        return {"error": "user_id is required"}
 
-@app.post("/register")
-async def register(user: User):
-    if user.telegram_id in users_db:
-        return users_db[user.telegram_id]
-    
-    ref_link = str(uuid.uuid4())[:8]
-    inviter_id = None
+    if user_id not in users:
+        # ایجاد کاربر جدید و افزودن اطلاعات مربوط به آن
+        users[user_id] = {
+            "user_id": user_id,
+            "ref": ref,
+            "ref_code": str(uuid.uuid4())[:8],  # ایجاد کد رفرال یکتا
+            "points": 0,
+            "invited": []
+        }
+        # اگر کاربر از یک رفرال آمده باشد، به کاربر مرجع امتیاز داده می‌شود
+        if ref in users:
+            users[ref]["points"] += 10
+            users[ref]["invited"].append(user_id)
 
-    # اگه از طریق لینک دعوت ثبت‌نام کرده
-    if user.ref_code:
-        for u_id, u_data in users_db.items():
-            if u_data["ref_link"] == user.ref_code:
-                inviter_id = u_id
-                users_db[u_id]["score"] += 10  # به معرف ۱۰ امتیاز بده
+    return users[user_id]
 
-    users_db[user.telegram_id] = {
-        "name": user.name,
-        "ref_link": ref_link,
-        "invited_by": inviter_id,
-        "score": 0,
-        "invited": []
-    }
-
-    if inviter_id:
-        users_db[inviter_id]["invited"].append(user.telegram_id)
-
-    return users_db[user.telegram_id]
-
-@app.get("/referrals/{telegram_id}")
-async def get_referrals(telegram_id: str):
-    user = users_db.get(telegram_id)
-    if not user:
-        return JSONResponse(status_code=404, content={"message": "کاربر یافت نشد"})
-    return user
+@router.get("/myref")
+async def get_my_ref(user_id: str = ""):
+    if user_id in users:
+        return users[user_id]
+    return {"error": "not registered"}
