@@ -9,9 +9,6 @@ app = FastAPI()
 app.include_router(referral_router, prefix="/referral")
 
 # صفحه اصلی برای تست که فقط پیام خوشامدگویی می‌دهد
-@app.get("/")
-async def root():
-    return {"message": "به مینی‌اپ ارز دیجیتال خوش آمدید!"}
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # اجازه دسترسی از هر جایی (مهم برای فرانت)
